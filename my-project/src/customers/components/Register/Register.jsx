@@ -3,26 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { createCustomer } from "~/customers/service/customerService.js";
 import { getAllCustomer } from "../../service/customerService";
 function Register() {
-  const [kh_ten, setKh_ten] = useState("");
-  const [kh_userName, setUserName] = useState("");
-  const [kh_passWord, setPassword] = useState("");
+  const [khTen, setkhTen] = useState("");
+  const [khUserName, setUserName] = useState("");
+  const [khPassWord, setPassword] = useState("");
   const [cfPassword, setCfPassword] = useState("");
-  const [kh_email, setEmail] = useState("");
+  const [khEmail, setEmail] = useState("");
   const [errors, setErrors] = useState({
-    kh_userName: "",
-    kh_passWord: "",
+    khUserName: "",
+    khPassWord: "",
     cfPassword: "",
-    kh_email: "",
-    kh_ten: "",
+    khEmail: "",
+    khTen: "",
   });
-
-  const [listCustomer, setListCustomer] = useState([]);
 
   const navigator = useNavigate();
   // Handle Input
   const handleInputFullName = (e) => {
     const fullName = e.target.value;
-    setKh_ten(fullName);
+    setkhTen(fullName);
   };
   const handleInputUserName = (e) => {
     setUserName(e.target.value.trim());
@@ -39,20 +37,6 @@ function Register() {
     setEmail(e.target.value.trim());
   };
 
-  //=============================================
-  // Get all customerr
-  useEffect(() => {
-    listCustomers();
-  }, []);
-
-  const listCustomers = async () => {
-    try {
-      const response = await getAllCustomer();
-      setListCustomer(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
   // ===============================================
   // Validation
   const validation = () => {
@@ -60,45 +44,33 @@ function Register() {
     const errorCopy = { ...errors };
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     let email = false;
-    if (kh_email) {
-      errorCopy.kh_email = "";
-      if (emailRegex.test(kh_email)) {
-        errorCopy.kh_email = "";
+    if (khEmail) {
+      errorCopy.khEmail = "";
+      if (emailRegex.test(khEmail)) {
+        errorCopy.khEmail = "";
       } else {
-        errorCopy.kh_email = "Email không hợp lệ";
+        errorCopy.khEmail = "Email không hợp lệ";
         valid = false;
       }
-      listCustomer.map((customer) => {
-        if (kh_email === customer.kh_email) {
-          errorCopy.kh_email = "Email đã tồn tại";
-          valid = false;
-        }
-      });
     } else {
-      errorCopy.kh_email = "Vui lòng nhập email";
+      errorCopy.khEmail = "Vui lòng nhập email";
       valid = false;
     }
-    if (kh_userName) {
-      errorCopy.kh_userName = "";
-      listCustomer.map((customer) => {
-        if (customer.kh_userName === kh_userName) {
-          errorCopy.kh_userName = "Username đã tồn tại";
-          valid = false;
-        }
-      });
+    if (khUserName) {
+      errorCopy.khUserName = "";
     } else {
-      errorCopy.kh_userName = "Vui lòng nhập username";
+      errorCopy.khUserName = "Vui lòng nhập username";
       valid = false;
     }
-    if (kh_passWord) {
-      errorCopy.kh_passWord = "";
+    if (khPassWord) {
+      errorCopy.khPassWord = "";
     } else {
-      errorCopy.kh_passWord = "Vui lòng nhập mật khẩu";
+      errorCopy.khPassWord = "Vui lòng nhập mật khẩu";
       valid = false;
     }
     if (cfPassword) {
       errorCopy.cfPassword = "";
-      if (kh_passWord === cfPassword) {
+      if (khPassWord === cfPassword) {
         errorCopy.cfPassword = "";
       } else {
         errorCopy.cfPassword = "Mật khẩu không khớp";
@@ -109,10 +81,10 @@ function Register() {
       valid = false;
     }
 
-    if (kh_ten) {
-      errorCopy.kh_ten = "";
+    if (khTen) {
+      errorCopy.khTen = "";
     } else {
-      errorCopy.kh_ten = "Vui lòng nhập tên";
+      errorCopy.khTen = "Vui lòng nhập tên";
       valid = false;
     }
     setErrors(errorCopy);
@@ -122,24 +94,59 @@ function Register() {
   // Create customer
   const createCustomerHandle = async (e) => {
     e.preventDefault();
+    setErrors({});
     if (validation()) {
-      const fullName = kh_ten
+      const fullName = khTen
         .trim()
         .toLowerCase()
         .split(/\s+/) // Duyệt qua nhiều khoảng trắng
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
-      setKh_ten(fullName);
-      const customer = { kh_userName, kh_passWord, kh_ten, kh_email };
-      navigator("/login");
+      setkhTen(fullName);
+
+      const customer = { khUserName, khPassWord, khTen: fullName, khEmail };
+      console.log(customer);
       try {
         const response = await createCustomer(customer);
         console.log("Customer created successfully:", response.data);
+         navigator("/login");
       } catch (error) {
-        console.error("There was an error creating the customer:", error);
+        setErrors({})
+        const errorReason = error.response.data.message.split(" ")[0];
+        const message = error.response.data.message;
+        const copyError = { ...errors };
+        setErrors({})
+        switch (errorReason) {
+          case "Username":
+            setErrors({})
+            copyError.khUserName = message;
+            break;
+          case "FullName":
+            setErrors({})
+            copyError.khTen = message;
+            break;
+          case "Email":
+            setErrors({})
+            copyError.khEmail = message;
+            break;
+          case "Pasword":
+            setErrors({})
+            copyError.khPassWord = message;
+            break;
+          default: console.log("Lỗi không xác định!: " + message);
+        }
+        setErrors(copyError);
+
+        if (error.response) {
+          console.log(error.response);
+        } else {
+          setErrors((prevErrors) => ({
+            ...prevErrors,
+            khUserName: "Đã xảy ra lỗi!!",
+          }));
+        }
       }
     }
-    n;
   };
 
   return (
@@ -175,19 +182,19 @@ function Register() {
                   name="fullname"
                   type="fullname"
                   autoComplete="fullname"
-                  value={kh_ten}
+                  value={khTen}
                   required
                   className={`form-control border${
-                    errors.kh_ten
+                    errors.khTen
                       ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   }`}
                   placeholder="Enter your full name"
                   onChange={handleInputFullName}
                 />
-                {errors.kh_ten && (
+                {errors.khTen && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.kh_ten}
+                    {errors.khTen}
                   </div>
                 )}
               </div>
@@ -207,16 +214,16 @@ function Register() {
                   autoComplete="username"
                   required
                   className={`form-control border${
-                    errors.kh_userName
+                    errors.khUserName
                       ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   }`}
                   placeholder="Enter your username"
                   onChange={handleInputUserName}
                 />
-                {errors.kh_userName && (
+                {errors.khUserName && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.kh_userName}
+                    {errors.khUserName}
                   </div>
                 )}
               </div>
@@ -237,16 +244,16 @@ function Register() {
                   autoComplete="current-password"
                   required
                   className={`form-control border${
-                    errors.kh_passWord
+                    errors.khPassWord
                       ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   }`}
                   placeholder="Enter your password"
                   onChange={handleInputPassword}
                 />
-                {errors.kh_passWord && (
+                {errors.khPassWord && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.kh_passWord}
+                    {errors.khPassWord}
                   </div>
                 )}
               </div>
@@ -302,9 +309,9 @@ function Register() {
                   placeholder="Enter your Email"
                   onChange={handleInputEmail}
                 />
-                {errors.email && (
+                {errors.khEmail && (
                   <div className="text-red-500 text-xs mt-1">
-                    {errors.email}
+                    {errors.khEmail}
                   </div>
                 )}
               </div>
