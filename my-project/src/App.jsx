@@ -1,24 +1,29 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes ,useLocation} from "react-router-dom";
 import "./App.css";
-import Login from "./customers/components/Login/Login.js";
-import Register from"./customers/components/Register/Register.js";
+import { useEffect } from "react";
+import Login from "~/pages/Login/Login.jsx";
+import Register from "~/pages/Register/Register.jsx";;
+import Dashboard from "./pages/Dashboard.jsx";
+import './css/style.css';
+import './charts/ChartjsConfig';
 
 
 function App() {
+  const location = useLocation();
 
+  useEffect(() => {
+    document.querySelector('html').style.scrollBehavior = 'auto';
+    window.scroll({ top: 0 });
+    document.querySelector('html').style.scrollBehavior = '';
+  }, [location.pathname]); // triggered on route change
 
   return (
     <div>
-      
-      <BrowserRouter>
       <Routes>
-        {/* // http://localhost:5173 */}
-        <Route path="/login" element = {<Login/>}></Route> 
-        <Route path="/register" element = {<Register/>}></Route>
-        
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/admin" element={<Dashboard />} />
       </Routes>
-
-      </BrowserRouter>
     </div>
   );
 }

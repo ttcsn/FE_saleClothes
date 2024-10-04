@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createCustomer } from "~/customers/service/customerService.js";
-import { getAllCustomer } from "../../service/customerService";
+import { getAllCustomer,createCustomer } from "~/service/customerService.js";
 function Register() {
   const [khTen, setkhTen] = useState("");
   const [khUserName, setUserName] = useState("");
