@@ -1,6 +1,48 @@
+import { useState } from "react";
+import { getToken } from "~/service/authenticationService.js";
+
 function Login() {
-  
-  
+  const [khUserName,setUserName] = useState("")
+  const [khPassWord,setPassword] = useState("")
+  const [errors,setError] = useState({
+    khUserName: "",
+    khPassWord: "",
+  });
+
+  //handle input
+  const handleInputUsername = (e) => {
+    setUserName(e.target.value);
+  }
+  const handleInputPassword = (e) => {
+    setPassword(e.target.value);
+  }
+  //handle login
+  const handleLogin = async (e) => {
+    setError({});
+    e.preventDefault(); //ngăn chặn hành vi mặc định của form
+    const customer = {khUserName,khPassWord}
+    const copyError = {...errors}
+    try {
+      const response = await getToken(customer)
+      
+      const token = response.data.result.token;
+      console.log(token)
+      localStorage.setItem('token',token)
+
+      console.log("Login successfully:", response.data);
+    } catch (error) {
+      if(error.response.data.message =="Mật khẩu không chính xác") {
+        copyError.khPassWord = error.response.data.message;
+      }
+      else {
+        copyError.khUserName = error.response.data.message;
+      }
+      setError(copyError)
+    }
+  }
+
+
+
   return (
     <div class="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
@@ -32,9 +74,20 @@ function Login() {
                   type="username"
                   autocomplete="username"
                   required
-                  class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className={`form-control border${
+                    errors.khTen
+                      ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  }`}
                   placeholder="Enter your Username"
+                  onChange={handleInputUsername}
+                  
                 />
+                {errors.khUserName && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {errors.khUserName}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -52,9 +105,19 @@ function Login() {
                   type="password"
                   autocomplete="current-password"
                   required
-                  class="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  className={`form-control border${
+                    errors.khPassWord
+                      ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                      : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  }`}
                   placeholder="Enter your password"
+                  onChange={handleInputPassword}
                 />
+                {errors.khPassWord && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {errors.khPassWord}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -88,6 +151,7 @@ function Login() {
               <button
                 type="submit"
                 class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                onClick={handleLogin}
               >
                 Sign in
               </button>
