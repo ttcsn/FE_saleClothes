@@ -3,15 +3,24 @@ import { Link, useNavigate } from "react-router-dom";
 import Transition from "../utils/Transition";
 
 import UserAvatar from "../images/user-avatar-32.png";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { getUserById } from "../redux/apiRequest";
+import { jwtDecode } from "jwt-decode";
 
 function DropdownProfile({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const user = useSelector((state) => state.auth.login.currentUser);
-  const khTen = user?.result?.khachHangDTO?.khTen;
-  const username = user?.result?.khachHangDTO?.khUserName;
-  
+  const dispatch = useDispatch();
+
+  const user = useSelector((state) => state.user.user?.user);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode(token);
+      getUserById(decoded.sub, token, dispatch);
+    }
+  }, []);
 
   const trigger = useRef(null);
   const dropdown = useRef(null);
@@ -62,7 +71,8 @@ function DropdownProfile({ align }) {
         />
         <div className="flex items-center truncate">
           <span className="truncate ml-2 text-sm font-medium text-gray-600 dark:text-gray-100 group-hover:text-gray-800 dark:group-hover:text-white">
-            {username}
+            {/*user name */}
+            {user && user.result ? user.result.khUserName : "Loading..."}
           </span>
           <svg
             className="w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500"
@@ -92,10 +102,12 @@ function DropdownProfile({ align }) {
         >
           <div className="pt-0.5 pb-2 px-3 mb-1 border-b border-gray-200 dark:border-gray-700/60">
             <div className="font-medium text-gray-800 dark:text-gray-100">
-              {username}
+              {/*   username */}
+              {user && user.result ? user.result.khUserName : "Loading..."}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400 italic">
-              {khTen}
+              {/*Full name*/}
+              {user && user.result ? user.result.khTen : "Loading..."}
             </div>
           </div>
           <ul>
