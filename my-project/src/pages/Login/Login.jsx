@@ -1,47 +1,59 @@
 import { useState } from "react";
-import { getToken } from "~/service/authenticationService.js";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../redux/apiRequest";
 
 function Login() {
-  const [khUserName,setUserName] = useState("")
-  const [khPassWord,setPassword] = useState("")
-  const [errors,setError] = useState({
+  const [khUserName, setUserName] = useState("");
+  const [khPassWord, setPassword] = useState("");
+  const [errors, setError] = useState({
     khUserName: "",
     khPassWord: "",
   });
 
+  const usernameError = useSelector((state) => state.auth.login.usernameError);
+  const passwordError = useSelector((state) => state.auth.login.passwordError);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
   //handle input
   const handleInputUsername = (e) => {
     setUserName(e.target.value);
-  }
+  };
   const handleInputPassword = (e) => {
     setPassword(e.target.value);
-  }
+  };
   //handle login
   const handleLogin = async (e) => {
-    setError({});
+    setError({
+      khUserName: "",
+      khPassWord: ""
+    });
+
     e.preventDefault(); //ngăn chặn hành vi mặc định của form
-    const customer = {khUserName,khPassWord}
-    const copyError = {...errors}
-    try {
-      const response = await getToken(customer)
-      
-      const token = response.data.result.token;
-      console.log(token)
-      localStorage.setItem('token',token)
-
-      console.log("Login successfully:", response.data);
-    } catch (error) {
-      if(error.response.data.message =="Mật khẩu không chính xác") {
-        copyError.khPassWord = error.response.data.message;
-      }
-      else {
-        copyError.khUserName = error.response.data.message;
-      }
-      setError(copyError)
-    }
-  }
-
-
+    const customer = { khUserName, khPassWord };
+    loginUser(customer, dispatch, navigate);
+    
+    if (usernameError) {
+      setError((prev) => ({
+        ...prev,
+        khUserName: usernameError,
+      }));
+    } else setError(prev => ({
+      ...prev,
+      khUserName: ""
+    }));
+    if (passwordError) {
+      setError((prev) => ({
+        ...prev,
+        khPassWord: passwordError,
+      }));
+    } else setError(prev => ({
+      ...prev,
+      khPassWord: ""
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -51,7 +63,10 @@ function Login() {
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600 max-w">
           Or
-          <a href="http://localhost:5173/register" className="ml-1 font-medium text-blue-600 hover:text-blue-500">
+          <a
+            href="http://localhost:5173/register"
+            className="ml-1 font-medium text-blue-600 hover:text-blue-500"
+          >
             create an account
           </a>
         </p>
@@ -75,13 +90,12 @@ function Login() {
                   autoComplete="username"
                   required
                   className={`form-control border${
-                    errors.khTen
+                    errors.khUserName
                       ? "appearance-none rounded-md relative block w-full px-3 py-2 border border-red-500 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                       : "appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   }`}
                   placeholder="Enter your Username"
                   onChange={handleInputUsername}
-                  
                 />
                 {errors.khUserName && (
                   <div className="text-red-500 text-xs mt-1">

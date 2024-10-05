@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { getAllCustomer,createCustomer } from "~/service/customerService.js";
+import { registerUser } from "../../redux/apiRequest";
 function Register() {
   const [khTen, setkhTen] = useState("");
   const [khUserName, setUserName] = useState("");
@@ -14,6 +15,14 @@ function Register() {
     khEmail: "",
     khTen: "",
   });
+
+  const usernameError = useSelector(
+    (state) => state.auth.register.usernameError
+  );
+  const emailError = useSelector((state) => state.auth.register.emailError);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const navigator = useNavigate();
   // Handle Input
@@ -102,49 +111,20 @@ function Register() {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
       setkhTen(fullName);
-
       const customer = { khUserName, khPassWord, khTen: fullName, khEmail };
-      console.log(customer);
-      try {
-        const response = await createCustomer(customer);
-        console.log("Customer created successfully:", response.data);
-         navigator("/login");
-      } catch (error) {
-        setErrors({})
-        const errorReason = error.response.data.message.split(" ")[0];
-        const message = error.response.data.message;
-        const copyError = { ...errors };
-        setErrors({})
-        switch (errorReason) {
-          case "Username":
-            setErrors({})
-            copyError.khUserName = message;
-            break;
-          case "FullName":
-            setErrors({})
-            copyError.khTen = message;
-            break;
-          case "Email":
-            setErrors({})
-            copyError.khEmail = message;
-            break;
-          case "Pasword":
-            setErrors({})
-            copyError.khPassWord = message;
-            break;
-          default: console.log("Lỗi không xác định!: " + message);
-        }
-        setErrors(copyError);
-
-        if (error.response) {
-          console.log(error.response);
-        } else {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            khUserName: "Đã xảy ra lỗi!!",
-          }));
-        }
-      }
+      registerUser(customer, dispatch, navigate);
+      if (usernameError) {
+        setErrors((prev) => ({
+          ...prev,
+          khUserName: usernameError,
+        }));
+      } else setErrors({});
+      if (emailError) {
+        setErrors((prev) => ({
+          ...prev,
+          khEmail: emailError,
+        }));
+      } else setErrors({});
     }
   };
 
