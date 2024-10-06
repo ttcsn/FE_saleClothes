@@ -1,66 +1,68 @@
-import { React,  useState, useEffect}  from "react";
+import { React, useState, useEffect } from "react";
 
 import * as jwt_decode from "jwt-decode";
 
-
 import Sidebar from "../partials/Sidebar";
 import Header from "../partials/Header";
-import FilterButton from "../components/DropdownFilter";
-import Datepicker from "../components/Datepicker";
-import DashboardCard01 from "../partials/dashboard/DashboardCard01";
-import DashboardCard02 from "../partials/dashboard/DashboardCard02";
-import DashboardCard03 from "../partials/dashboard/DashboardCard03";
-import DashboardCard04 from "../partials/dashboard/DashboardCard04";
-import DashboardCard05 from "../partials/dashboard/DashboardCard05";
-import DashboardCard06 from "../partials/dashboard/DashboardCard06";
-import DashboardCard07 from "../partials/dashboard/DashboardCard07";
-import DashboardCard08 from "../partials/dashboard/DashboardCard08";
-import DashboardCard09 from "../partials/dashboard/DashboardCard09";
-import DashboardCard10 from "../partials/dashboard/DashboardCard10";
-import DashboardCard11 from "../partials/dashboard/DashboardCard11";
-import DashboardCard12 from "../partials/dashboard/DashboardCard12";
-import DashboardCard13 from "../partials/dashboard/DashboardCard13";
+
 import Banner from "../partials/Banner";
 import Login from "./Login/Login";
 import { useNavigate } from "react-router-dom";
+import DashboardMain from "../layouts/DashboardMain";
+import Product from "../layouts/Product";
 
 function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentComponent, setCurrentComponent] = useState("dashboard");
   const [token, setToken] = useState(null); // Khởi tạo token rỗng
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(true);
+
+
+
   const navigate = useNavigate();
 
+
+
+
   useEffect(() => {
-    const storedToken = localStorage.getItem("token") // Lấy token từ localStorage
-    
-    if(!storedToken) {
+    const storedToken = localStorage.getItem("token"); // Lấy token từ localStorage
+
+    if (!storedToken) {
       setToken(null);
       setIsLoading(false);
-    }
-    else {
+    } else {
       try {
         //Giai ma token
-        const decodedToken = jwt_decode(storedToken)
+        const decodedToken = jwt_decode(storedToken);
         console.log(decodedToken);
-        
-      } catch (error) {
-        
-      }
+      } catch (error) {}
       setToken(storedToken);
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [navigate]); 
-  
+  }, [navigate]);
+
+  //render
+  console.log(currentComponent)
+  const renderComponent = () => {
+    switch (currentComponent) {
+      case "product":
+        return <Product />;
+      default:
+        return <DashboardMain/>
+    }
+  };
+
   if (isLoading) {
     // Trong khi chờ kiểm tra token, hiển thị loading hoặc một nội dung khác
-    return <div >Loading...</div>;
+    return <div>Loading...</div>;
   }
   return (
-    <div>
+    <div >
       {token != null ? (
+        
         <div className="flex h-screen overflow-hidden">
           {/* Sidebar */}
-          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} setCurrentComponent={setCurrentComponent}/>
 
           {/* Content area */}
           <div className="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -68,67 +70,7 @@ function Dashboard() {
             <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
             <main className="grow">
-              <div className="px-4 sm:px-6 lg:px-8 py-8 w-full max-w-9xl mx-auto">
-                {/* Dashboard actions */}
-                <div className="sm:flex sm:justify-between sm:items-center mb-8">
-                  {/* Left: Title */}
-                  <div className="mb-4 sm:mb-0">
-                    <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-                      Dashboard
-                    </h1>
-                  </div>
-
-                  {/* Right: Actions */}
-                  <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-                    {/* Filter button */}
-                    <FilterButton align="right" />
-                    {/* Datepicker built with flatpickr */}
-                    <Datepicker align="right" />
-                    {/* Add view button */}
-                    <button className="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-                      <svg
-                        className="fill-current shrink-0 xs:hidden"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                      >
-                        <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-                      </svg>
-                      <span className="max-xs:sr-only">Add View</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Cards */}
-                <div className="grid grid-cols-12 gap-6">
-                  {/* Line chart (Acme Plus) */}
-                  <DashboardCard01 />
-                  {/* Line chart (Acme Advanced) */}
-                  <DashboardCard02 />
-                  {/* Line chart (Acme Professional) */}
-                  <DashboardCard03 />
-                  {/* Bar chart (Direct vs Indirect) */}
-                  <DashboardCard04 />
-                  {/* Line chart (Real Time Value) */}
-                  <DashboardCard05 />
-                  {/* Doughnut chart (Top Countries) */}
-                  <DashboardCard06 />
-                  {/* Table (Top Channels) */}
-                  <DashboardCard07 />
-                  {/* Line chart (Sales Over Time) */}
-                  <DashboardCard08 />
-                  {/* Stacked bar chart (Sales VS Refunds) */}
-                  <DashboardCard09 />
-                  {/* Card (Customers) */}
-                  <DashboardCard10 />
-                  {/* Card (Reasons for Refunds) */}
-                  <DashboardCard11 />
-                  {/* Card (Recent Activity) */}
-                  <DashboardCard12 />
-                  {/* Card (Income/Expenses) */}
-                  <DashboardCard13 />
-                </div>
-              </div>
+              {renderComponent()} {/* Render component dựa trên state */}
             </main>
 
             <Banner />

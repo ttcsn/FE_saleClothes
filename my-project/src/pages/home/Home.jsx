@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 import Header from "../../partials/Header";
 import { getAllUsers } from "../../redux/apiRequest";
 import { useDispatch } from "react-redux";
+import Product from "../../layouts/Product";
 
 function Home() {
     const dispatch = useDispatch();
@@ -11,7 +12,10 @@ function Home() {
     })
     
     return ( 
+        <Fragment>
         <Header/>
+        <Product/>
+        </Fragment>
      );
 }
 

@@ -8,6 +8,7 @@ import {
   registerSuccess,
 } from "./authSlice";
 import {
+  deleteUserStart,
   getUserFailed,
   getUsersFailed,
   getUsersStart,
@@ -94,3 +95,13 @@ export const getUserById = async (username, token, dispatch) => {
     dispatch(getUserFailed());
   }
 };
+
+// delete user 
+export const deleteUser = async (token,dispatch,username) => {
+  dispatch(deleteUserStart())
+  try {
+    
+  } catch (error) {
+    
+  }
+}

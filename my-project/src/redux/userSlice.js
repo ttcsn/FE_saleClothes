@@ -12,7 +12,8 @@ const userSlice = createSlice({
         user: null,
         isFetching: false,
         error: false
-    }
+    },
+    msg:"",
   },
   reducers: {
     // get all user
@@ -38,11 +39,23 @@ const userSlice = createSlice({
     getUserFailed: (state) => {
         state.user.isFetching = false;
         state.user.error = true;
+    },
+    deleteUserStart: (state) => {
+      state.user.isFetching = true;
+    },
+    deleteUserSuccess: (state,action) => {
+      state.user.isFetching = false;
+      state.msg = action.payload;
+    },
+    deleteUserFailed: (state,action) => {
+      state.user.isFetching = false;
+      state.user.error = true;
+      state.msg = action.payload
     }
 
   },
 });
-export const { getUsersStart, getUsersSuccess, getUsersFailed, getUserStart,getUserSuccess,getUserFailed } =
+export const { getUsersStart, getUsersSuccess, getUsersFailed, getUserStart,getUserSuccess,getUserFailed,deleteUserStart,deleteUserSuccess,deleteUserFailed } =
   userSlice.actions;
 
 export default userSlice.reducer;
