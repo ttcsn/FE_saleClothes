@@ -9,13 +9,15 @@ import { jwtDecode } from "jwt-decode";
 
 function DropdownProfile({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.user.user?.user);
+  
+
+  
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode(token);
       getUserById(decoded.sub, token, dispatch);

@@ -16,6 +16,7 @@ import {
   getUserStart,
   getUserSuccess,
 } from "./userSlice";
+import axiosInstance from "./axiosConfig";
 
 const REST_AUTH_BASE_URL = "http://localhost:8081/auth";
 const REST_API_BASE_URL = "http://localhost:8081/api";
@@ -86,7 +87,7 @@ export const getAllUsers = async (token, dispatch) => {
 export const getUserById = async (username, token, dispatch) => {
   dispatch(getUserStart());
   try {
-    const res = await axios.get(REST_API_BASE_URL + `/khachhang/${username}`, {
+    const res = await axiosInstance.get(REST_API_BASE_URL + `/khachhang/${username}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     dispatch(getUserSuccess(res.data))
@@ -105,3 +106,15 @@ export const deleteUser = async (token,dispatch,username) => {
     
   }
 }
+
+//refresh token
+export const refreshToken = async (token) => {
+  try {
+    const res = await axios.post("http://localhost:8081/auth/refresh", {
+      token,
+    });
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
