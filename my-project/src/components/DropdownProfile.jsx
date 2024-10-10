@@ -1,33 +1,36 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import Transition from "../utils/Transition";
 
 import UserAvatar from "../images/user-avatar-32.png";
 import { useDispatch, useSelector } from "react-redux";
-import { getUserById } from "../redux/apiRequest";
+import { getUserById,logout } from "../redux/apiRequest";
 import { jwtDecode } from "jwt-decode";
 
 function DropdownProfile({ align }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const user = useSelector((state) => state.user.user?.user);
   
-
   
 
   useEffect(() => {
     if (token) {
+
       const decoded = jwtDecode(token);
       getUserById(decoded.sub, token, dispatch);
     }
-  }, []);
+  }, [navigate]);
 
   const trigger = useRef(null);
   const dropdown = useRef(null);
   const logout = () => {
+    logout(dispatch,token)
     localStorage.removeItem("token");
+   
   };
   // close on click outside
   useEffect(() => {
@@ -123,13 +126,13 @@ function DropdownProfile({ align }) {
               </Link>
             </li>
             <li>
-              <Link
+              <NavLink
+                to={"/login"}
                 className="font-medium text-sm text-violet-500 hover:text-violet-600 dark:hover:text-violet-400 flex items-center py-1 px-3"
                 onClick={logout}
-                to={"/login"}
               >
                 Sign Out
-              </Link>
+              </NavLink>
             </li>
           </ul>
         </div>

@@ -13,7 +13,6 @@ function Header({ sidebarOpen, setSidebarOpen, variant = "default" }) {
   const [loading, setLoading] = useState(true);
 
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (!storedToken) {
@@ -21,14 +20,15 @@ function Header({ sidebarOpen, setSidebarOpen, variant = "default" }) {
       setLoading(false);
     } else {
       const decoded = jwtDecode(storedToken);
-      let date = new Date();
-      if (decoded.iat + 60 <= date.getTime() / 1000) {
+      let date = Date.now();
+      if (decoded.iat + 60*60*24 <= date / 1000) {
         setToken(false);
       } else {
         setToken(true);
       }
       setLoading(false)
     }
+    console.log(token)
   }, []);
   
   if (loading) {
@@ -116,7 +116,7 @@ function Header({ sidebarOpen, setSidebarOpen, variant = "default" }) {
             {/*  Divider */}
             <hr className="w-px h-6 bg-gray-200 dark:bg-gray-700/60 border-none" />
 
-            {token ? (
+            {token === true ? (
               <UserMenu align="right" />
             ) : (
               <div className="flex space-x-2">

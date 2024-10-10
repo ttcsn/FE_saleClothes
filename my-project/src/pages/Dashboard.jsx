@@ -1,6 +1,6 @@
 import { React, useState, useEffect } from "react";
 
-import * as jwt_decode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 import Sidebar from "../partials/Sidebar";
 import Header from "../partials/Header";
@@ -16,10 +16,11 @@ function Dashboard() {
   const [currentComponent, setCurrentComponent] = useState("dashboard");
   const [token, setToken] = useState(null); // Khởi tạo token rỗng
   const [isLoading, setIsLoading] = useState(true);
-
+  const [role,setRole] = useState("")
 
 
   const navigate = useNavigate();
+
 
 
 
@@ -32,9 +33,11 @@ function Dashboard() {
       setIsLoading(false);
     } else {
       try {
+        setIsLoading(false)
         //Giai ma token
-        const decodedToken = jwt_decode(storedToken);
-        console.log(decodedToken);
+       const decodedToken = jwtDecode(storedToken)
+       setRole(decodedToken.scope)
+        console.log(role);
       } catch (error) {}
       setToken(storedToken);
       setIsLoading(false);
@@ -58,7 +61,7 @@ function Dashboard() {
   }
   return (
     <div >
-      {token != null ? (
+      {role == "ADMIN" ? (
         
         <div className="flex h-screen overflow-hidden">
           {/* Sidebar */}
@@ -77,7 +80,7 @@ function Dashboard() {
           </div>
         </div>
       ) : (
-        <Login />
+        navigate("/")
       )}
     </div>
   );

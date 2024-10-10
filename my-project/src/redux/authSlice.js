@@ -17,6 +17,11 @@ const authSlice = createSlice({
       usernameError: "",  // Thông báo lỗi cho username
       emailError: "",     // Thông báo lỗi cho email
     },
+    logout: {
+      isFetching: false,
+      error: false,
+      success: false,
+    },
   },
   reducers: {
     loginStart: (state) => {
@@ -48,6 +53,20 @@ const authSlice = createSlice({
       state.register.usernameError = action.payload.usernameError || "";  // Lưu thông báo lỗi cho username
       state.register.emailError = action.payload.emailError || ""; 
     },
+    logoutStart: (state) => {
+      state.register.isFetching = true;
+    },
+    logoutSuccess: (state) => {
+      state.register.isFetching = false;
+      state.register.success = true;
+      state.register.error = false;
+    },
+    logoutFailed: (state) => {
+      state.register.isFetching = false;
+      state.register.error = true;
+      state.register.success = false;
+    },
+  
   },
 });
 export const {
@@ -57,6 +76,9 @@ export const {
   registerStart,
   registerFailed,
   registerSuccess,
+  logoutStart,
+  logoutSuccess,
+  logoutFailed,
 } = authSlice.actions;
 
 export default authSlice.reducer;

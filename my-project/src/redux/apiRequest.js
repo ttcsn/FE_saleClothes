@@ -3,6 +3,7 @@ import {
   loginFailed,
   loginStart,
   loginSuccess,
+  logoutStart,
   registerFailed,
   registerStart,
   registerSuccess,
@@ -17,6 +18,15 @@ import {
   getUserSuccess,
 } from "./userSlice";
 import axiosInstance from "./axiosConfig";
+import {
+  getCategoryFailed,
+  getCategoryStart,
+  getCategorySuccess,
+  getSubCategoryFailed,
+  getSubCategoryStart,
+  getSubCategorySuccess,
+} from "./categorySlice";
+import { addProductStart, addProductSuccess,addProductFailed } from "./productSlice";
 
 const REST_AUTH_BASE_URL = "http://localhost:8081/auth";
 const REST_API_BASE_URL = "http://localhost:8081/api";
@@ -87,25 +97,25 @@ export const getAllUsers = async (token, dispatch) => {
 export const getUserById = async (username, token, dispatch) => {
   dispatch(getUserStart());
   try {
-    const res = await axiosInstance.get(REST_API_BASE_URL + `/khachhang/${username}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    dispatch(getUserSuccess(res.data))
+    const res = await axiosInstance.get(
+      REST_API_BASE_URL + `/khachhang/${username}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    dispatch(getUserSuccess(res.data));
   } catch (error) {
     console.error(error);
     dispatch(getUserFailed());
   }
 };
 
-// delete user 
-export const deleteUser = async (token,dispatch,username) => {
-  dispatch(deleteUserStart())
+// delete user
+export const deleteUser = async (token, dispatch, username) => {
+  dispatch(deleteUserStart());
   try {
-    
-  } catch (error) {
-    
-  }
-}
+  } catch (error) {}
+};
 
 //refresh token
 export const refreshToken = async (token) => {
@@ -118,3 +128,77 @@ export const refreshToken = async (token) => {
     console.log(error);
   }
 };
+
+//Logout
+export const logout = async (dispatch, token) => {
+  dispatch(logoutStart());
+  try {
+    const res = await axios.post(REST_AUTH_BASE_URL + "/logout", { token });
+    dispatch(loginSuccess());
+  } catch (error) {
+    dispatch(loginFailed());
+    console.log(error);
+  }
+};
+
+//Get all danh muc
+export const getAllDanhMuc = async (dispatch, token) => {
+  dispatch(getCategoryStart());
+  try {
+    const res = await axiosInstance(REST_API_BASE_URL + "/danhmucs", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch(getCategorySuccess(res.data));
+  } catch (error) {
+    console.log(error);
+    dispatch(getCategoryFailed());
+  }
+};
+// Get all danh muc con
+export const getDanhMucConBydmMa = async (dispatch, dmMa, token) => {
+  dispatch(getSubCategoryStart());
+  try {
+    const res = await axiosInstance(REST_API_BASE_URL + `/danhmuccon/${dmMa}`);
+    dispatch(getSubCategorySuccess(res.data));
+  } catch (error) {
+    console.log(error);
+    dispatch(getSubCategoryFailed());
+  }
+};
+
+// Upload image to server
+export const uploadImageToFileSystem = async (selectedFile,spMa) => {
+  const formData = new FormData();
+  formData.append("image",selectedFile);
+  formData.append("spMa",spMa);
+  try {
+    const res = await axiosInstance.post("http://localhost:8081/image/fileSystem",formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    })
+    return res.data;
+  } catch (error) {
+    console.error('Error uploading file', error);
+  }
+}
+// add product
+export const addProduct = async (product,dispatch,token) => {
+  dispatch(addProductStart());
+  try {
+    const res = await axiosInstance.post(REST_API_BASE_URL + "/add-sanpham", product, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+   
+    dispatch(addProductSuccess(res.data))
+    return res.data;
+  } catch (error) {
+    console.log(error)
+    dispatch(addProductFailed())
+  
+  }
+}

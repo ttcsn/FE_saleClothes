@@ -14,7 +14,6 @@ axiosInstance.interceptors.request.use(
       let date = new Date();
       if (decodedToken.exp < date.getTime() / 1000) {
         const newTokenData = await refreshToken(token);
-        console.log(newTokenData.result.token)
         localStorage.setItem("token",newTokenData.result.token);
         config.headers["Authorization"] = "Bearer " + newTokenData.result.token;
       } else {
