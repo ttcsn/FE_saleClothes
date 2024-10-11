@@ -19,6 +19,9 @@ import {
 } from "./userSlice";
 import axiosInstance from "./axiosConfig";
 import {
+  getAllSubCategoryFailed,
+  getAllSubCategoryStart,
+  getAllSubCategorySuccess,
   getCategoryFailed,
   getCategoryStart,
   getCategorySuccess,
@@ -26,7 +29,14 @@ import {
   getSubCategoryStart,
   getSubCategorySuccess,
 } from "./categorySlice";
-import { addProductStart, addProductSuccess,addProductFailed } from "./productSlice";
+import {
+  addProductStart,
+  addProductSuccess,
+  addProductFailed,
+  getAllProductStart,
+  getAllProductSuccess,
+  getAllProductFailed,
+} from "./productSlice";
 
 const REST_AUTH_BASE_URL = "http://localhost:8081/auth";
 const REST_API_BASE_URL = "http://localhost:8081/api";
@@ -156,7 +166,7 @@ export const getAllDanhMuc = async (dispatch, token) => {
     dispatch(getCategoryFailed());
   }
 };
-// Get all danh muc con
+// Get  danh muc con by dmMa
 export const getDanhMucConBydmMa = async (dispatch, dmMa, token) => {
   dispatch(getSubCategoryStart());
   try {
@@ -167,38 +177,75 @@ export const getDanhMucConBydmMa = async (dispatch, dmMa, token) => {
     dispatch(getSubCategoryFailed());
   }
 };
-
-// Upload image to server
-export const uploadImageToFileSystem = async (selectedFile,spMa) => {
-  const formData = new FormData();
-  formData.append("image",selectedFile);
-  formData.append("spMa",spMa);
+// Get all danh muc con
+export const getAllDanhMucCon = async (dispatch, token) => {
+  dispatch(getAllSubCategoryStart());
   try {
-    const res = await axiosInstance.post("http://localhost:8081/image/fileSystem",formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      }
-    })
-    return res.data;
-  } catch (error) {
-    console.error('Error uploading file', error);
-  }
-}
-// add product
-export const addProduct = async (product,dispatch,token) => {
-  dispatch(addProductStart());
-  try {
-    const res = await axiosInstance.post(REST_API_BASE_URL + "/add-sanpham", product, {
+    const res = await axiosInstance(REST_API_BASE_URL + "/danhmuccons", {
       headers: {
         Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch(getAllSubCategorySuccess(res.data));
+  } catch (error) {
+    dispatch(getAllSubCategoryFailed());
+    console.log(error);
+  }
+};
+
+// Upload image to server
+export const uploadImageToFileSystem = async (selectedFile, spMa) => {
+  const formData = new FormData();
+  formData.append("image", selectedFile);
+  formData.append("spMa", spMa);
+  try {
+    const res = await axiosInstance.post(
+      "http://localhost:8081/image/fileSystem",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
-    })
-   
-    dispatch(addProductSuccess(res.data))
+    );
     return res.data;
   } catch (error) {
-    console.log(error)
-    dispatch(addProductFailed())
-  
+    console.error("Error uploading file", error);
   }
-}
+};
+// add product
+export const addProduct = async (product, dispatch, token) => {
+  dispatch(addProductStart());
+  try {
+    const res = await axiosInstance.post(
+      REST_API_BASE_URL + "/add-sanpham",
+      product,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    dispatch(addProductSuccess(res.data));
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    dispatch(addProductFailed());
+  }
+};
+// get all product
+export const getAllProduct = async (dispatch, token) => {
+  dispatch(getAllProductStart());
+  try {
+    const res = await axiosInstance.get(REST_API_BASE_URL + "/sanphams", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch(getAllProductSuccess(res.data));
+  } catch (error) {
+    dispatch(getAllProductFailed());
+    console.log(error);
+  }
+};

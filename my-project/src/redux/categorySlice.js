@@ -14,7 +14,13 @@ const categorySlice = createSlice({
       currentSubCategory: null,
       error: false,
       success: false,
-    }
+    },
+    getAllSubCategory: {
+      isFetching: false,
+      currentAllSubCategory: null,
+      error: false,
+      success: false,
+    },
   },
   reducers: {
     getCategoryStart: (state) => {
@@ -45,6 +51,20 @@ const categorySlice = createSlice({
       state.getSubCategory.error = true;
       state.getSubCategory.success = false;
     },
+    getAllSubCategoryStart: (state) => {
+      state.getAllSubCategory.isFetching = true;
+    },
+    getAllSubCategorySuccess: (state, action) => {
+      state.getAllSubCategory.isFetching = false;
+      state.getAllSubCategory.error = false;
+      state.getAllSubCategory.success = true;
+      state.getAllSubCategory.currentAllSubCategory = action.payload;
+    },
+    getAllSubCategoryFailed: (state) => {
+      state.getAllSubCategory.isFetching = false;
+      state.getAllSubCategory.error = true;
+      state.getAllSubCategory.success = false;
+    },
   },
 });
 
@@ -55,7 +75,10 @@ export const {
     getCategorySuccess,
     getSubCategoryStart,
     getSubCategorySuccess,
-    getSubCategoryFailed
+    getSubCategoryFailed,
+    getAllSubCategoryStart,
+    getAllSubCategorySuccess,
+    getAllSubCategoryFailed
 } = categorySlice.actions
 
 export default categorySlice.reducer;
