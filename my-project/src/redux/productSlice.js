@@ -15,6 +15,18 @@ const productSlice = createSlice({
       error: false,
       success: false,
     },
+    getImageProduct: {
+      isFetching: false,
+      currentImageProduct: null,
+      error: false,
+      success: false,
+    },
+    getAllImageProduct: {
+      isFetching: false,
+      currentAllImageProduct: null,
+      error: false,
+      success: false,
+    },
   },
   reducers: {
     addProductStart: (state) => {
@@ -45,10 +57,50 @@ const productSlice = createSlice({
       state.getAllProduct.error = true;
       state.getAllProduct.success = false;
     },
+    getImageProductStart: (state) => {
+      state.getImageProduct.isFetching = true;
+    },
+    getImageProductSuccess: (state, action) => {
+      state.getImageProduct.isFetching = false;
+      state.getImageProduct.error = false;
+      state.getImageProduct.success = true;
+      state.getImageProduct.currentImageProduct = action.payload;
+    },
+    getImageProductFailed: (state) => {
+      state.getImageProduct.isFetching = false;
+      state.getImageProduct.error = true;
+      state.getImageProduct.success = false;
+    },
+    getAllImageProductStart: (state) => {
+      state.getAllImageProduct.isFetching = true;
+    },
+    getAllImageProductSuccess: (state, action) => {
+      state.getAllImageProduct.isFetching = false;
+      state.getAllImageProduct.error = false;
+      state.getAllImageProduct.success = true;
+      state.getAllImageProduct.currentAllImageProduct = action.payload;
+    },
+    getAllImageProductFailed: (state) => {
+      state.getAllImageProduct.isFetching = false;
+      state.getAllImageProduct.error = true;
+      state.getAllImageProduct.success = false;
+    },
   },
 });
 
-export const { addProductStart, addProductSuccess, addProductFailed, getAllProductStart,getAllProductFailed,getAllProductSuccess } =
-  productSlice.actions;
+export const {
+  addProductStart,
+  addProductSuccess,
+  addProductFailed,
+  getAllProductStart,
+  getAllProductFailed,
+  getAllProductSuccess,
+  getImageProductFailed,
+  getImageProductStart,
+  getImageProductSuccess,
+  getAllImageProductFailed,
+  getAllImageProductStart,
+  getAllImageProductSuccess
+} = productSlice.actions;
 
 export default productSlice.reducer;

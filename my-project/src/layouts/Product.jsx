@@ -7,17 +7,19 @@ import {
   getAllProduct,
   getDanhMucConBydmMa,
   uploadImageToFileSystem,
-  getAllDanhMucCon
+  getAllDanhMucCon,
+  deleteProduct,
 } from "../redux/apiRequest";
 import { useDispatch, useSelector } from "react-redux";
 import ProductTable from "../components/ProductTable";
+import SuccessMessage from "../components/SuccessMessage";
+import DrawerUpdate from "../components/DrawerUpdate";
 
 function Product() {
   const inputRef = useRef();
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [shouldRerender, setShouldRerender] = useState(false);
-  const [description, setDescription] = useState("This is some text");
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerUpdateOpen, setIsDrawerUpdateOpen] = useState(false);
   const [isDrawerPreviewOpen, setIsDrawerPreviewOpen] = useState(false);
@@ -33,6 +35,7 @@ function Product() {
   const [spMoTaChiTiet, setFullDescription] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [spTen, setProductName] = useState("");
+  const [spMa,setSpMa] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -54,7 +57,7 @@ function Product() {
       setKeyDm(selectDm);
     }
   };
-  //Handle subCategory
+  //Handle subCategory ======================================================================
   const subCategory = useSelector(
     (state) => state.category.getSubCategory?.currentSubCategory
   );
@@ -69,16 +72,14 @@ function Product() {
   }, [keyDm, dispatch]);
   useEffect(() => {
     const accessToken = localStorage.getItem("token");
-    getAllDanhMucCon(dispatch,accessToken);
+    getAllDanhMucCon(dispatch, accessToken);
   }, []);
-  
+
   const handleChangeSubKeyDm = (e) => {
     setSubKeyDm(e.target.value);
   };
-  // Handle Add Product
-  const stateProduct = useSelector(
-    (state) => state?.product?.addProduct?.success
-  );
+  // Handle Add Product=======================================================================
+
 
   const handleAddProduct = async (e) => {
     try {
@@ -95,9 +96,9 @@ function Product() {
         spColor,
         dmcMa,
       };
-      
-      const response = await addProduct(product, dispatch, accessToken);
 
+      const response = await addProduct(product, dispatch, accessToken);
+      console.log(response)
       // Get spMa from the response
       const spMa = response.result.spMa; // Adjust this based on your actual response structure
 
@@ -107,14 +108,25 @@ function Product() {
       } else {
         console.error("Image file is not defined or spMa is missing");
       }
-
+      fetchProduct();
       closeModal();
-
-      setShouldRerender(prev => !prev);  // Toggle the state to force re-render
+      if (response.code == 1000) {
+        setShowSuccessMessage(true);
+        console.log(true);  // Log this after state has been updated
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+        }, 2000);
+      }
     } catch (error) {
       console.error("Error adding product or uploading image", error);
     }
+    
   };
+
+  // handle get ma san pham
+  const handleGetMaSp = (maSp) => {
+    setSpMa(maSp);
+  }
 
   // Handle Get all product ========================================================
   const stateAllProduct = useSelector(
@@ -125,16 +137,40 @@ function Product() {
   );
 
   const allProduct = stateAllProduct?.result || [];
-
-  useEffect(() => {
+  const fetchProduct = () => {
     const accessToken = localStorage.getItem("token");
     getAllProduct(dispatch, accessToken);
+  };
+
+  useEffect(() => {
+    fetchProduct();
+    
   }, []);
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  // handle phân trang ====================================================================
-  
+// Get Product by Sp ma=========================================================================
+const productBySpMa = allProduct.find(product => product.spMa == spMa)
+
+
+  // handle delete product ====================================================================
+
+  const handleDeleteProduct = async () => {
+    const accessToken = localStorage.getItem("token");
+    try {
+      // Wait for the delete operation to complete
+      await deleteProduct(selectedProductId, accessToken);
+
+      // Now call fetchProducts to update the product list
+      fetchProduct(); // Refresh the product list after deletion
+
+      // Close the modal after successful deletion
+      closeDeleteModal();
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product"); // Handle any errors that occur
+    }
+  };
 
   //Handel Input============================================================================
 
@@ -162,7 +198,6 @@ function Product() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log(file);
     setSelectedFile(file);
   };
 
@@ -173,10 +208,10 @@ function Product() {
   };
 
   const closeModal = () => {
+    setIsDrawerUpdateOpen(false);
     setIsModalOpen(false);
     setSelectedFile(null);
     setColor("");
-    setDescription("");
     setFullDescription("");
     setShortDescription("");
     setStock(0);
@@ -199,7 +234,8 @@ function Product() {
   const closeDrawerPreview = () => {
     setIsDrawerPreviewOpen(false);
   };
-  const openDeleteModal = () => {
+  const openDeleteModal = (id) => {
+    setSelectedProductId(id);
     setIsDeleteModalOpen(true);
   };
 
@@ -1170,338 +1206,15 @@ function Product() {
                 </div>
               </div>
             </div>
-            <ProductTable allProduct={allProduct} allSubCategory={allSubCategory} onpenDrawerUpdate={onpenDrawerUpdate} openDrawerPreview={openDrawerPreview} openDeleteModal={openDeleteModal}/>
-            {/* <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th scope="col" className="p-4">
-                      <div className="flex items-center">
-                        <input
-                          id="checkbox-all"
-                          type="checkbox"
-                          className="w-4 h-4 text-primary-600 bg-gray-100 rounded border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                        />
-                        <label htmlFor="checkbox-all" className="sr-only">
-                          checkbox
-                        </label>
-                      </div>
-                    </th>
-                    <th scope="col" className="p-4">
-                      Product
-                    </th>
-                    <th scope="col" className="p-4">
-                      Category
-                    </th>
-                    <th scope="col" className="p-4">
-                      Stock
-                    </th>
-                    <th scope="col" className="p-4">
-                      Sales/Day
-                    </th>
-                    <th scope="col" className="p-4">
-                      Sales/Month
-                    </th>
-                    <th scope="col" className="p-4">
-                      Rating
-                    </th>
-                    <th scope="col" className="p-4">
-                      Sales
-                    </th>
-                    <th scope="col" className="p-4">
-                      Revenue
-                    </th>
-                    <th scope="col" className="p-4">
-                      Last Update
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allProduct.map((product) => (
-                    <tr key={product.spMa} className="border-b dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-                      <td className="p-4 w-4">
-                        <div className="flex items-center">
-                          <input
-                            id="checkbox-table-search-1"
-                            type="checkbox"
-                            onClick={(event) => event.stopPropagation()}
-                            className="w-4 h-4 text-primary-600 bg-gray-100 rounded border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                          />
-                          <label
-                            htmlFor="checkbox-table-search-1"
-                            className="sr-only"
-                          >
-                            checkbox
-                          </label>
-                        </div>
-                      </td>
-                      <th
-                        scope="row"
-                        className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white"
-                      >
-                        <div className="flex items-center mr-3">
-                          <img
-                            src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-front-image.png"
-                            alt="iMac Front Image"
-                            className="h-8 w-auto mr-3"
-                          />
-                          {product.spTen}&#34;
-                        </div>
-                      </th>
-                      <td className="px-4 py-3">
-                        <span className="bg-primary-100 text-primary-800 text-xs font-medium px-2 py-0.5 rounded dark:bg-primary-900 dark:text-primary-300">
-                          {allSubCategory?.result.find(item => item.dmcMa === product.dmcMa).dmcTen}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <div className="flex items-center">
-                          {product.spSoLuong <= 100 ? (<div className="h-4 w-4 rounded-full inline-block mr-2 bg-red-700"></div>) : (<div className="h-4 w-4 rounded-full inline-block mr-2 bg-green-700"/>)}
-                          {product.spSoLuong}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        1.47
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        0.47
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <div className="flex items-center">
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <svg
-                            aria-hidden="true"
-                            className="w-5 h-5 text-yellow-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span className="text-gray-500 dark:text-gray-400 ml-1">
-                            5.0
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <div className="flex items-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="w-5 h-5 text-gray-400 mr-2"
-                            aria-hidden="true"
-                          >
-                            <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
-                          </svg>
-                          1.6M
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">$3.2M</td>
-                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        <div className="flex items-center space-x-4">
-                          <button
-                            onClick={onpenDrawerUpdate}
-                            type="button"
-                            className="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary-700 rounded-lg hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 mr-2 -ml-0.5"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              aria-hidden="true"
-                            >
-                              <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={openDrawerPreview}
-                            className="py-2 px-3 flex items-center text-sm font-medium text-center text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="w-4 h-4 mr-2 -ml-0.5"
-                            >
-                              <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M1.323 11.447C2.811 6.976 7.028 3.75 12.001 3.75c4.97 0 9.185 3.223 10.675 7.69.12.362.12.752 0 1.113-1.487 4.471-5.705 7.697-10.677 7.697-4.97 0-9.186-3.223-10.675-7.69a1.762 1.762 0 010-1.113zM17.25 12a5.25 5.25 0 11-10.5 0 5.25 5.25 0 0110.5 0z"
-                              />
-                            </svg>
-                            Preview
-                          </button>
-                          <button
-                            type="button"
-                            onClick={openDeleteModal}
-                            className="flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 mr-2 -ml-0.5"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                              aria-hidden="true"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <nav
-              className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 p-4"
-              aria-label="Table navigation"
-            >
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                Showing
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  1-10
-                </span>
-                of
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  1000
-                </span>
-              </span>
-              <ul className="inline-flex items-stretch -space-x-px">
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center h-full py-1.5 px-3 ml-0 text-gray-500 bg-white rounded-l-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <span className="sr-only">Previous</span>
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    1
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    2
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    aria-current="page"
-                    className="flex items-center justify-center text-sm z-10 py-2 px-3 leading-tight text-primary-600 bg-primary-50 border border-primary-300 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
-                  >
-                    3
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    ...
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center text-sm py-2 px-3 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    100
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="flex items-center justify-center h-full py-1.5 px-3 leading-tight text-gray-500 bg-white rounded-r-lg border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-                  >
-                    <span className="sr-only">Next</span>
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </a>
-                </li>
-              </ul>
-            </nav> */}
+            <ProductTable
+              productBySpMa={productBySpMa}
+              allProduct={allProduct}
+              allSubCategory={allSubCategory}
+              onpenDrawerUpdate={onpenDrawerUpdate}
+              openDrawerPreview={openDrawerPreview}
+              openDeleteModal={openDeleteModal}
+              handleGetMaSp = {handleGetMaSp}
+            />
           </div>
         </div>
       </section>
@@ -1880,597 +1593,24 @@ function Product() {
           </div>
         </div>
       )}
+      {showSuccessMessage && <SuccessMessage />}
 
       {/**drawer component */}
 
       {isDrawerUpdateOpen && (
-        <div
-          tabIndex="-1"
-          aria-hidden="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto "
-        >
-          <form
-            action="#"
-            id="drawer-update-product"
-            className={`mt-5 rounded-md fixed top-0 left-1/2 z-40 w-full max-w-3xl p-4 overflow-y-auto transition-transform bg-white dark:bg-gray-800 
-            ${
-              isDrawerUpdateOpen
-                ? "translate-x-[-50%] translate-y-0"
-                : "-translate-x-full -translate-y-full"
-            }`}
-            style={{ maxHeight: "90vh" }} // Giới hạn chiều cao tối đa của form
-            tabIndex="-1"
-          >
-            <h5
-              id="drawer-label"
-              className="inline-flex items-center mb-6 text-sm font-semibold text-gray-500 uppercase dark:text-gray-400"
-            >
-              New Product
-            </h5>
-            <button
-              onClick={closeDrawerUpdate}
-              type="button"
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 absolute top-2.5 right-2.5 inline-flex items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            >
-              <svg
-                aria-hidden="true"
-                className="w-5 h-5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <span className="sr-only">Close menu</span>
-            </button>
-
-            <div className="grid gap-4 sm:grid-cols-3 sm:gap-6 ">
-              <div className="space-y-4 sm:col-span-2 sm:space-y-6">
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Product Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="Apple iMac 27&ldquo;"
-                    placeholder="Type product name"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Description
-                  </label>
-                  <div className="w-full border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                    <div className="flex items-center justify-between px-3 py-2 border-b dark:border-gray-600">
-                      <div className="flex flex-wrap items-center divide-gray-200 sm:divide-x dark:divide-gray-600">
-                        <div className="flex items-center space-x-1 sm:pr-4">
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Attach file</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Embed map</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Upload image</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Format code</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Add emoji</span>
-                          </button>
-                        </div>
-                        <div className="flex-wrap items-center hidden space-x-1 sm:flex sm:pl-4">
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Add list</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="p-2 text-gray-500 rounded cursor-pointer hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                          >
-                            <svg
-                              aria-hidden="true"
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span className="sr-only">Settings</span>
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        data-tooltip-target="tooltip-fullscreen"
-                        className="p-2 text-gray-500 rounded cursor-pointer sm:ml-auto hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-9 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="sr-only">Full screen</span>
-                      </button>
-                      <div
-                        id="tooltip-fullscreen"
-                        role="tooltip"
-                        className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700"
-                        data-popper-reference-hidden=""
-                        data-popper-escaped=""
-                        data-popper-placement="bottom"
-                        style={{
-                          position: "absolute",
-                          inset: "0px auto auto 0px", // "inset" vẫn được hỗ trợ trong đối tượng style
-                          margin: "0px",
-                          transform: "translate3d(0px, 335px, 0px)",
-                        }}
-                      >
-                        Show full screen
-                        <div
-                          className="tooltip-arrow"
-                          data-popper-arrow=""
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="px-4 py-3 bg-white rounded-b-lg dark:bg-gray-800">
-                      <textarea
-                        value={description}
-                        id="description"
-                        rows="8"
-                        className="block w-full px-0 text-sm text-gray-800 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"
-                        placeholder="Write product description here"
-                        required=""
-                      >
-                        Standard glass, 3.8GHz 8-core 10th-generation Intel Core
-                        i7 processor, Turbo Boost up to 5.0GHz, 16GB 2666MHz
-                        DDR4 memory, Radeon Pro 5500 XT with 8GB of GDDR6
-                        memory, 256GB SSD storage, Gigabit Ethernet, Magic Mouse
-                        2, Magic Keyboard - US
-                      </textarea>
-                    </div>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <span className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                    Product Images
-                  </span>
-                  <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="relative p-2 bg-gray-100 rounded-lg sm:w-36 sm:h-36 dark:bg-gray-700">
-                      <img
-                        src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-side-image.png"
-                        alt="imac image"
-                      />
-                      <button
-                        type="button"
-                        className="absolute text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400 bottom-1 left-1"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="sr-only">Remove image</span>
-                      </button>
-                    </div>
-                    <div className="relative p-2 bg-gray-100 rounded-lg sm:w-36 sm:h-36 dark:bg-gray-700">
-                      <img
-                        src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-front-image.png"
-                        alt="imac image"
-                      />
-                      <button
-                        type="button"
-                        className="absolute text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400 bottom-1 left-1"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="sr-only">Remove image</span>
-                      </button>
-                    </div>
-                    <div className="relative p-2 bg-gray-100 rounded-lg sm:w-36 sm:h-36 dark:bg-gray-700">
-                      <img
-                        src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-back-image.png"
-                        alt="imac image"
-                      />
-                      <button
-                        type="button"
-                        className="absolute text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400 bottom-1 left-1"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="sr-only">Remove image</span>
-                      </button>
-                    </div>
-                    <div className="relative p-2 bg-gray-100 rounded-lg sm:w-36 sm:h-36 dark:bg-gray-700">
-                      <img
-                        src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-side-image.png"
-                        alt="imac image"
-                      />
-                      <button
-                        type="button"
-                        className="absolute text-red-600 dark:text-red-500 hover:text-red-500 dark:hover:text-red-400 bottom-1 left-1"
-                      >
-                        <svg
-                          aria-hidden="true"
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="sr-only">Remove image</span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center w-full">
-                    <label
-                      htmlFor="dropzone-file"
-                      className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-                    >
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <svg
-                          aria-hidden="true"
-                          className="w-10 h-10 mb-3 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
-                        </svg>
-                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                          <span className="font-semibold">Click to upload</span>
-                          or drag and drop
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          SVG, PNG, JPG or GIF (MAX. 800x400px)
-                        </p>
-                      </div>
-                      <input
-                        id="dropzone-file"
-                        type="file"
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                </div>
-                <div className="flex items-center mb-4">
-                  <input
-                    id="product-options"
-                    type="checkbox"
-                    value=""
-                    className="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                  />
-                  <label
-                    htmlFor="product-options"
-                    className="ml-2 text-sm text-gray-500 dark:text-gray-300"
-                  >
-                    Product has multiple options, like different colors or sizes
-                  </label>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <svg
-                      aria-hidden="true"
-                      className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <input
-                    datepicker=""
-                    id="datepicker"
-                    type="text"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 datepicker-input"
-                    value="15/08/2022"
-                    placeholder="Select date"
-                  />
-                </div>
-              </div>
-              <div className="space-y-4 sm:space-y-6">
-                <div>
-                  <label
-                    htmlFor="product-brand"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Brand
-                  </label>
-                  <input
-                    type="text"
-                    id="product-brand"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="Apple"
-                    placeholder="Product Brand"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="category"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Category
-                  </label>
-                  <select
-                    id="category"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                  >
-                    <option value="">Electronics</option>
-                    <option value="TV">TV/Monitors</option>
-                    <option value="PC">PC</option>
-                    <option value="GA">Gaming/Console</option>
-                    <option value="PH">Phones</option>
-                  </select>
-                </div>
-                <div>
-                  <label
-                    htmlFor="item-weight"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Item Weight (kg)
-                  </label>
-                  <input
-                    type="number"
-                    name="item-weight"
-                    id="item-weight"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="12"
-                    placeholder="Ex. 12"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="length"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Length (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="length"
-                    id="lenght"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="105"
-                    placeholder="Ex. 105"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="breadth"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Breadth (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="breadth"
-                    id="breadth"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="15"
-                    placeholder="Ex. 15"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="width"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Width (cm)
-                  </label>
-                  <input
-                    type="number"
-                    name="width"
-                    id="width"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                    value="23"
-                    placeholder="Ex. 23"
-                    required=""
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-6 sm:w-1/2">
-              <button
-                type="submit"
-                className="text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-              >
-                Update product
-              </button>
-              <button
-                type="button"
-                className="text-red-600 inline-flex justify-center items-center hover:text-white border border-red-600 hover:bg-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
-              >
-                <svg
-                  aria-hidden="true"
-                  className="w-5 h-5 mr-1 -ml-1"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                Delete
-              </button>
-            </div>
-          </form>
-        </div>
+        <DrawerUpdate
+          isDrawerUpdateOpen={isDrawerUpdateOpen}
+          closeDrawerUpdate={closeDrawerUpdate}
+          handleProductNameChange={handleProductNameChange}
+          category={category}
+          handleChangeSubKeyDm={handleChangeSubKeyDm}
+          subCategory={subCategory}
+          closeModal={closeModal}
+          handleCategoryChange={handleCategoryChange}
+          productBySpMa={productBySpMa}
+          dmcMa={dmcMa}
+          fetchProduct = {fetchProduct}
+        />
       )}
       {/*Preview Drawer */}
       {isDrawerPreviewOpen && (
@@ -2758,6 +1898,7 @@ function Product() {
                   <button
                     type="button"
                     className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2"
+                    onClick={handleDeleteProduct}
                   >
                     Yes, I'm sure
                   </button>

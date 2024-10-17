@@ -36,6 +36,12 @@ import {
   getAllProductStart,
   getAllProductSuccess,
   getAllProductFailed,
+  getImageProductStart,
+  getImageProductSuccess,
+  getImageProductFailed,
+  getAllImageProductStart,
+  getAllImageProductSuccess,
+  getAllImageProductFailed,
 } from "./productSlice";
 
 const REST_AUTH_BASE_URL = "http://localhost:8081/auth";
@@ -213,6 +219,43 @@ export const uploadImageToFileSystem = async (selectedFile, spMa) => {
     console.error("Error uploading file", error);
   }
 };
+// DownLoad image product from server
+export const downloadAllImageFromServerBySpMa = async (
+  spMa,
+  token,
+  dispatch
+) => {
+  dispatch(getImageProductStart());
+  try {
+    const res = await axiosInstance.get(
+      `http://localhost:8081/image/fileSystems/${spMa}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    dispatch(getImageProductSuccess(res.data));
+  } catch (error) {
+    console.log(error);
+    dispatch(getImageProductFailed());
+  }
+};
+// Download all image products from server
+export const downloadAllImage = async (token, dispatch) => {
+  try {
+    dispatch(getAllImageProductStart());
+    const response = await axiosInstance.get("http://localhost:8081/images", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch(getAllImageProductSuccess(response.data));
+  } catch (error) {
+    dispatch(getAllImageProductFailed());
+    console.log(error);
+  }
+};
 // add product
 export const addProduct = async (product, dispatch, token) => {
   dispatch(addProductStart());
@@ -249,3 +292,64 @@ export const getAllProduct = async (dispatch, token) => {
     console.log(error);
   }
 };
+
+// delete product
+export const deleteProduct = async (spMa, token) => {
+  try {
+    await axiosInstance.delete(REST_API_BASE_URL + `/delete-sanpham/${spMa}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+// update product =================================================================
+export const updateProduct = async (spMa,product,token) => {
+try {
+  const res =await axiosInstance.put(REST_API_BASE_URL + `/sanpham/${spMa}`,product, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  return res;
+} catch (error) {
+  console.log(error)
+}
+}
+
+// update image product ==============================================================
+
+export const updateImageProduct = async (files,spMa,token) => {
+
+try {
+  const formData = new FormData();
+  files.map(file => {
+    formData.append("files",file)
+  })
+  formData.append("spMa",spMa)
+  const res = await axiosInstance.post("http://localhost:8081/images/fileSystem",formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  return res.data
+} catch (error) {
+  console.log(error);
+  
+}
+}
+// delete image product =============================================================
+export const deleteImages = async (names,spMa,token) => {
+  try {
+    await axiosInstance.delete(`http://localhost:8081/image/fileSystems/${spMa}`, {
+      data: names,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+  } catch (error) {
+    console.log(error)
+  }
+}

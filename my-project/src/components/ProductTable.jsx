@@ -1,9 +1,25 @@
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { downloadAllImage, downloadAllImageFromServerBySpMa } from "../redux/apiRequest";
 
-function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDrawerPreview, openDeleteModal}) {
+function ProductTable({
+  allProduct,
+  allSubCategory,
+  onpenDrawerUpdate,
+  openDrawerPreview,
+  openDeleteModal,
+  handleGetMaSp,
+}) {
   const itemsPerPage = 7;
   const [currentPage, setCurrentPage] = useState(1);
   const [show3Dot, setShow3Dot] = useState(true);
+  const [accessToken, setAccessToken] = useState("");
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    setAccessToken(localStorage.getItem("token"));
+  });
 
   const totalPages = Math.ceil(allProduct.length / itemsPerPage);
 
@@ -13,17 +29,16 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
     startIndex + itemsPerPage
   );
   useEffect(() => {
-    if(totalPages <= 3) {
-        setShow3Dot(false);
-    } else if (currentPage === (totalPages - 2)) {
-        setShow3Dot(false)
-    } else if (currentPage === (totalPages - 1)) {
-        setShow3Dot(false)
-    }  else if (currentPage === totalPages) {
-        setShow3Dot(false)
-    }
-    else setShow3Dot(true)
-  })
+    if (totalPages <= 3) {
+      setShow3Dot(false);
+    } else if (currentPage === totalPages - 2) {
+      setShow3Dot(false);
+    } else if (currentPage === totalPages - 1) {
+      setShow3Dot(false);
+    } else if (currentPage === totalPages) {
+      setShow3Dot(false);
+    } else setShow3Dot(true);
+  });
 
   // tính toán các trang cần hiển thị
   const getDisplayedPages = () => {
@@ -49,18 +64,30 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
-    
   };
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
-  const changePage = (page) =>{
-    setCurrentPage(page)
-  }
-  
+  const changePage = (page) => {
+    setCurrentPage(page);
+  };
 
+  const allImageData = useSelector(state => state.product.getAllImageProduct?.currentAllImageProduct)
+  const allImageUrl = allImageData?.result;
+  useEffect(() => {
+    downloadAllImage(accessToken,dispatch);
+  },[])
+  const getImageUrlProduct = (spMa) => {
+    if (!allImageUrl || allImageUrl.length === 0) {
+      console.log("allImageUrl is not ready or empty");
+      return;
+    }
+    const image = allImageUrl.find(image => image.maSp === spMa);
+    const result = image?.imageUrl;
+    return result;
+  }
   return (
     <div>
       <div className="overflow-x-auto">
@@ -136,8 +163,8 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
                 >
                   <div className="flex items-center mr-3">
                     <img
-                      src="https://flowbite.s3.amazonaws.com/blocks/application-ui/products/imac-front-image.png"
-                      alt="iMac Front Image"
+                      src={getImageUrlProduct(product.spMa)}
+                      alt=""
                       className="h-8 w-auto mr-3"
                     />
                     {product.spTen}&#34;
@@ -238,7 +265,10 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
                 <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                   <div className="flex items-center space-x-4">
                     <button
-                      onClick={onpenDrawerUpdate}
+                      onClick={() => {
+                        onpenDrawerUpdate();
+                        handleGetMaSp(product.spMa);
+                      }}
                       type="button"
                       className="py-2 px-3 flex items-center text-sm font-medium text-center text-white bg-primary-700 rounded-lg hover:bg-primary-800 focus:ring-4 focus:outline-none focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                     >
@@ -280,7 +310,7 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
                     </button>
                     <button
                       type="button"
-                      onClick={openDeleteModal}
+                      onClick={() => openDeleteModal(product.spMa)}
                       className="flex items-center text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900"
                     >
                       <svg
@@ -342,23 +372,20 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
             </button>
           </li>
           {displayedPages.map((page) => (
-            <li
-            onClick={() => changePage(page)}
-            key={page}
-            >
-            <button
-              href="#"
-              className={`flex items-center justify-center text-sm py-2 px-3 leading-tight ${
-                currentPage ===  page
-                  ? 'z-10 text-primary-600 bg-primary-50 border border-primary-300 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white'
-                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
-              }`}
-            >
-              {page}
-            </button>
-          </li>
+            <li onClick={() => changePage(page)} key={page}>
+              <button
+                href="#"
+                className={`flex items-center justify-center text-sm py-2 px-3 leading-tight ${
+                  currentPage === page
+                    ? "z-10 text-primary-600 bg-primary-50 border border-primary-300 hover:bg-primary-100 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+                    : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                }`}
+              >
+                {page}
+              </button>
+            </li>
           ))}
-          
+
           {show3Dot && (
             <li>
               <a
@@ -369,7 +396,7 @@ function ProductTable({ allProduct , allSubCategory, onpenDrawerUpdate, openDraw
               </a>
             </li>
           )}
-          {totalPages > 3 && (currentPage < 7) && (
+          {totalPages > 3 && currentPage < 7 && (
             <li>
               <a
                 href="#"

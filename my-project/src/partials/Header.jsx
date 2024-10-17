@@ -20,15 +20,16 @@ function Header({ sidebarOpen, setSidebarOpen, variant = "default" }) {
       setLoading(false);
     } else {
       const decoded = jwtDecode(storedToken);
-      let date = Date.now();
-      if (decoded.iat + 60*60*24 <= date / 1000) {
+      
+     const currentTime = new Date()
+      
+      if ((decoded.iat + 60*60*24) <= (currentTime.getTime() /1000)) {
         setToken(false);
       } else {
         setToken(true);
       }
       setLoading(false)
     }
-    console.log(token)
   }, []);
   
   if (loading) {
@@ -116,13 +117,15 @@ function Header({ sidebarOpen, setSidebarOpen, variant = "default" }) {
             {/*  Divider */}
             <hr className="w-px h-6 bg-gray-200 dark:bg-gray-700/60 border-none" />
 
-            {token === true ? (
+            {token  ? (
               <UserMenu align="right" />
+              
             ) : (
               <div className="flex space-x-2">
-                <Link to={"/login"}>Đăng nhập</Link>
-                <Link to={"/register"}>Đăng ký</Link>
-              </div>
+              <Link to={"/login"}>Đăng nhập</Link>
+              <Link to={"/register"}>Đăng ký</Link>
+            </div>
+              
             )}
           </div>
         </div>
